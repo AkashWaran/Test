@@ -4,23 +4,63 @@ import nltk
 from nltk.collocations import * 
 from nltk.tag.stanford import NERTagger
 
+stopwords = []
+
+class NLPFile :
+    def __init__(self, path) :
+	self.name = path
+	self.word_dict = {}
+	self.ProcessFile()
+
+    def ProcessFile(self) :
+	self.data = open(self.name, 'r').read()
+	self.tokens = [item for item in nltk.word_tokenize(self.data) if item not in stopwords]
+	self.bigrams = BigramCollocationFinder.from_words(self.tokens).score_ngrams(bigramMeasure.raw_freq)
+	self.word_dict.update(tagger.tag(self.tokens))
+
+    def PrintName(self) :
+	return self.name
+
+    def PrintTokens(self) :
+	return ', '.join(self.tokens)
+
+    def PrintBigrams(self) :
+	return ', '.join("(%s,%s)" % tup for tup in self.bigrams)
+
+    def PrintMatches(self, criteria) :
+	result = ""
+	for word, val in self.word_dict.items():
+	    if val in criteria:
+		result = result + word + " "
+	return result
+
+    def SearchPhrase(self, value) :
+	if value in self.data.lower() :
+	    message = "Phrase / word present in document"
+	else :
+	    message = "Phrase / word not present in document"
+	return message
+
 class NLP(wx.Frame):
 
     def __init__(self, parent, title):
         super(NLP, self).__init__(parent, title=title, size=(500, 450)) 
+	self.InitParams()
         self.InitUI()
         self.Centre()
         self.Show()     
 
-    def ProcessFile(self, path) :
-	self.data = open(path,'r').read()
+    def InitParams(self) :
 	f = open('Smart.English.stop') 
 	stopwords = filter(None, f.read().split('\n'))
 	f.close();
-	self.tokens = [item for item in nltk.word_tokenize(self.data) if item not in stopwords]
-	self.bigrams = BigramCollocationFinder.from_words(self.tokens).score_ngrams(nltk.collocations.BigramAssocMeasures().raw_freq)
-	st = NERTagger('./stanford-ner-2014-10-26/classifiers/english.all.3class.distsim.crf.ser.gz', './stanford-ner-2014-10-26/stanford-ner.jar')
-	self.word_dict.update(st.tag(self.tokens))
+	global bigramMeasure = nltk.collocations.BigramAssocMeasures()
+	global tagger = NERTagger('./stanford-ner-2014-10-26/classifiers/english.all.3class.distsim.crf.ser.gz', './stanford-ner-2014-10-26/stanford-ner.jar')
+	self.search_criteria = []
+	self.NLPFileList = []
+
+    def ProcessFile(self, path) :
+	self.NLPFileList.append(NLPFile(path))
 
     def SelectFile(self, event) :
 	wildcard = "All files (*.*)|*.*"
@@ -29,13 +69,22 @@ class NLP(wx.Frame):
 	    self.ProcessFile(dialog.GetPath())
 	dialog.Destroy()
 
+    def SelectDir(self, event) :
+	print "select directory"
+
     def ViewWords(self, event) :
-	print self.tokens
-	self.tc.SetValue(', '.join(self.tokens))
+	self.tc.setValue("PRINTING TOKENS")
+	for f in self.NLPFileList :
+	    self.tc.setValue("----------------------------------------------------------")
+	    self.tc.AppendText(f.PrintName())
+	    self.tc.AppendText(f.PrintTokens())
 
     def ViewBigrams(self, event) :
-	print self.bigrams
-	self.tc.SetValue(', '.join("(%s,%s)" % tup for tup in self.bigrams))
+	self.tc.setValue("PRINTING BIGRAMS")
+	for f in self.NLPFileList :
+	    self.tc.setValue("----------------------------------------------------------")
+	    self.tc.AppendText(f.PrintName())
+	    self.tc.AppendText(f.PrintBigrams())
 
     def ShowOrHideTitle(self, event) :
 	sender = event.GetEventObject()
@@ -47,24 +96,20 @@ class NLP(wx.Frame):
 	    self.search_criteria.remove(sender.GetName())
 
     def ViewNames(self, event) :
-	result = ""
-	for word, val in self.word_dict.items():
-	    if val in self.search_criteria:
-		result = result + word + " "
-	print result
-	self.tc.SetValue(result)
+	self.tc.setValue("PRINTING MATCHES")
+	for f in self.NLPFileList :
+	    self.tc.setValue("----------------------------------------------------------")
+	    self.tc.AppendText(f.PrintName())
+	    self.tc.AppendText(f.PrintMatches(self.search_criteria))
 
     def SearchPhrase(self, event) :
-	if self.tc2.GetValue().lower() in self.data.lower() :
-	    message = "Phrase / word present in document"
-	else :
-	    message = "Phrase / word not present in document"
-	print message
-	self.tc.SetValue(message)
+	self.tc.setValue("PRINTING SEARCH RESULTS")
+	for f in self.NLPFileList :
+	    self.tc.setValue("----------------------------------------------------------")
+	    self.tc.AppendText(f.PrintName())
+	    self.tc.AppendText(f.SearchPhrase(self.tc2.GetValue().lower()))
 
     def InitUI(self): 
-	self.search_criteria = []
-	self.word_dict = {}
         panel = wx.Panel(self)
 
         font = wx.SystemSettings_GetFont(wx.SYS_SYSTEM_FONT)
@@ -81,9 +126,13 @@ class NLP(wx.Frame):
 	vbox.Add((-1, 10))
 
 	hbox2 = wx.BoxSizer(wx.HORIZONTAL)
-	browseFile = wx.Button(panel, label="Select File or Directory of Files to Process")
+	browseFile = wx.Button(panel, label="Select File to Process")
         browseFile.Bind(wx.EVT_BUTTON, self.SelectFile)
 	hbox2.Add(browseFile, flag=wx.ALIGN_CENTER)
+
+	browseDir = wx.Button(panel, label="Select Directory to Process")
+	browseDir.Bind(wx.EVT_BUTTON, self.SelectDir)
+	hbox2.Add(browseDir, flag=wx.ALIGN_CENTER)
         vbox.Add(hbox2, flag=wx.ALIGN_CENTER|wx.TOP, border=10)
         
 	vbox.Add((-1, 10))
@@ -144,7 +193,6 @@ class NLP(wx.Frame):
 
         panel.SetSizer(vbox)
 
-
 if __name__ == '__main__':
     #/usr/lib/jvm/jdk1.8.0_25/jre/bin/java
     print "In order to run this program you will need jdk version 1.8. In case the path is not set then please enter it here (q to skip this in case environment variables are already set) : "
@@ -152,5 +200,5 @@ if __name__ == '__main__':
     if java_path != 'q' :
         os.environ['JAVAHOME'] = java_path
     app = wx.App()
-    NLP(None, title='Go To Class')
+    NLP(None, title='Corpus Statistics')
     app.MainLoop()
