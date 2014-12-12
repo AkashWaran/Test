@@ -6,15 +6,8 @@ from nltk.tag.stanford import NERTagger
 
 class NLP(wx.Frame):
 
-    data = ""
-    tokens = []
-    bigrams = []
-    namedict = {}
-    search_criteria = []
-
     def __init__(self, parent, title):
-        super(NLP, self).__init__(parent, title=title, 
-            size=(500, 450)) 
+        super(NLP, self).__init__(parent, title=title, size=(500, 450)) 
         self.InitUI()
         self.Centre()
         self.Show()     
@@ -27,7 +20,7 @@ class NLP(wx.Frame):
 	self.tokens = [item for item in nltk.word_tokenize(self.data) if item not in stopwords]
 	self.bigrams = BigramCollocationFinder.from_words(self.tokens).score_ngrams(nltk.collocations.BigramAssocMeasures().raw_freq)
 	st = NERTagger('./stanford-ner-2014-10-26/classifiers/english.all.3class.distsim.crf.ser.gz', './stanford-ner-2014-10-26/stanford-ner.jar')
-	self.namedict.update(st.tag(self.tokens))
+	self.word_dict.update(st.tag(self.tokens))
 
     def SelectFile(self, event) :
 	wildcard = "All files (*.*)|*.*"
@@ -47,28 +40,21 @@ class NLP(wx.Frame):
     def ShowOrHideTitle(self, event) :
 	sender = event.GetEventObject()
 	label = sender.GetLabel()
-	if (label == "People") :
-	    value = "PERSON"
-	elif (label == "Organizations") :
-	    value = "ORGANIZATION"
-	else :
-	    value = "LOCATION"
 	isChecked = sender.GetValue()
 	if isChecked:
-	    self.search_criteria.append(value)
+	    self.search_criteria.append(sender.GetName())
 	else: 
-	    self.search_criteria.remove(value)
+	    self.search_criteria.remove(sender.GetName())
 
     def ViewNames(self, event) :
 	result = ""
-	for word, val in self.namedict.items():
+	for word, val in self.word_dict.items():
 	    if val in self.search_criteria:
-		result = result + " " + word
+		result = result + word + " "
 	print result
 	self.tc.SetValue(result)
 
     def SearchPhrase(self, event) :
-	message = ""
 	if self.tc2.GetValue().lower() in self.data.lower() :
 	    message = "Phrase / word present in document"
 	else :
@@ -77,6 +63,8 @@ class NLP(wx.Frame):
 	self.tc.SetValue(message)
 
     def InitUI(self): 
+	self.search_criteria = []
+	self.word_dict = {}
         panel = wx.Panel(self)
 
         font = wx.SystemSettings_GetFont(wx.SYS_SYSTEM_FONT)
@@ -119,19 +107,19 @@ class NLP(wx.Frame):
 	vbox1.Add(viewNamesBtn, flag=wx.ALIGN_CENTER)
 	vbox1.Add((-1, 10))
 
-	cb1 = wx.CheckBox(panel, label='People')
+	cb1 = wx.CheckBox(panel, label='People', name='PERSON')
         cb1.SetFont(font)
 	cb1.Bind(wx.EVT_CHECKBOX, self.ShowOrHideTitle)
         vbox1.Add(cb1)
 	vbox1.Add((-1, 10))
         
-        cb2 = wx.CheckBox(panel, label='Organizations')
+        cb2 = wx.CheckBox(panel, label='Organizations', name='ORGANIZATION')
         cb2.SetFont(font)
 	cb2.Bind(wx.EVT_CHECKBOX, self.ShowOrHideTitle)
         vbox1.Add(cb2)
 	vbox1.Add((-1, 10))
 
-        cb3 = wx.CheckBox(panel, label='Locations')
+        cb3 = wx.CheckBox(panel, label='Locations', name='LOCATION')
         cb3.SetFont(font)
 	cb3.Bind(wx.EVT_CHECKBOX, self.ShowOrHideTitle)
         vbox1.Add(cb3)
