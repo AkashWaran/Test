@@ -66,6 +66,12 @@ class NLP(wx.Frame):
     def ProcessFile(self, path) :
 	self.NLPFileList.append(NLPFile(path))
 
+    def ProcessDir(self, path) :
+	self.NLPFileList[:] = []
+	for files in os.listdir(path) :
+	    if files.endswith(".txt") :
+		self.ProcessFile(os.path.join(path,files))
+
     def SelectFile(self, event) :
 	wildcard = "All files (*.*)|*.*"
 	dialog = wx.FileDialog(None, "Choose a file", os.getcwd(), "", wildcard, wx.OPEN)
@@ -74,19 +80,22 @@ class NLP(wx.Frame):
 	dialog.Destroy()
 
     def SelectDir(self, event) :
-	print "select directory"
+	dlg = wx.DirDialog(None, "Choose a directory:")
+	if dlg.ShowModal() == wx.ID_OK:
+	    self.ProcessDir(dlg.GetPath())
+	dlg.Destroy()
 
     def ViewWords(self, event) :
 	self.tc.SetValue("PRINTING TOKENS")
 	for f in self.NLPFileList :
-	    self.tc.AppendText("\n----------------------------------------------------------")
+	    self.tc.AppendText("\n\n----------------------------------------------------------")
 	    self.tc.AppendText("\n"+f.PrintName())
 	    self.tc.AppendText("\n\n"+f.PrintTokens())
 
     def ViewBigrams(self, event) :
 	self.tc.SetValue("PRINTING BIGRAMS")
 	for f in self.NLPFileList :
-	    self.tc.AppendText("\n----------------------------------------------------------")
+	    self.tc.AppendText("\n\n----------------------------------------------------------")
 	    self.tc.AppendText("\n"+f.PrintName())
 	    self.tc.AppendText("\n\n"+f.PrintBigrams())
 
@@ -102,14 +111,14 @@ class NLP(wx.Frame):
     def ViewNames(self, event) :
 	self.tc.SetValue("PRINTING MATCHES")
 	for f in self.NLPFileList :
-	    self.tc.AppendText("\n----------------------------------------------------------")
+	    self.tc.AppendText("\n\n----------------------------------------------------------")
 	    self.tc.AppendText("\n"+f.PrintName())
 	    self.tc.AppendText("\n\n"+f.PrintMatches(self.search_criteria))
 
     def SearchPhrase(self, event) :
 	self.tc.SetValue("PRINTING SEARCH RESULTS")
 	for f in self.NLPFileList :
-	    self.tc.AppendText("\n----------------------------------------------------------")
+	    self.tc.AppendText("\n\n----------------------------------------------------------")
 	    self.tc.AppendText("\n"+f.PrintName())
 	    self.tc.AppendText("\n\n"+f.SearchPhrase(self.tc2.GetValue().lower()))
 
