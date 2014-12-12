@@ -79,16 +79,16 @@ class NLP(wx.Frame):
     def ViewWords(self, event) :
 	self.tc.SetValue("PRINTING TOKENS")
 	for f in self.NLPFileList :
-	    self.tc.AppendText("----------------------------------------------------------")
-	    self.tc.AppendText(f.PrintName())
-	    self.tc.AppendText(f.PrintTokens())
+	    self.tc.AppendText("\n----------------------------------------------------------")
+	    self.tc.AppendText("\n"+f.PrintName())
+	    self.tc.AppendText("\n\n"+f.PrintTokens())
 
     def ViewBigrams(self, event) :
 	self.tc.SetValue("PRINTING BIGRAMS")
 	for f in self.NLPFileList :
-	    self.tc.AppendText("----------------------------------------------------------")
-	    self.tc.AppendText(f.PrintName())
-	    self.tc.AppendText(f.PrintBigrams())
+	    self.tc.AppendText("\n----------------------------------------------------------")
+	    self.tc.AppendText("\n"+f.PrintName())
+	    self.tc.AppendText("\n\n"+f.PrintBigrams())
 
     def ShowOrHideTitle(self, event) :
 	sender = event.GetEventObject()
@@ -102,16 +102,16 @@ class NLP(wx.Frame):
     def ViewNames(self, event) :
 	self.tc.SetValue("PRINTING MATCHES")
 	for f in self.NLPFileList :
-	    self.tc.AppendText("----------------------------------------------------------")
-	    self.tc.AppendText(f.PrintName())
-	    self.tc.AppendText(f.PrintMatches(self.search_criteria))
+	    self.tc.AppendText("\n----------------------------------------------------------")
+	    self.tc.AppendText("\n"+f.PrintName())
+	    self.tc.AppendText("\n\n"+f.PrintMatches(self.search_criteria))
 
     def SearchPhrase(self, event) :
 	self.tc.SetValue("PRINTING SEARCH RESULTS")
 	for f in self.NLPFileList :
-	    self.tc.AppendText("----------------------------------------------------------")
-	    self.tc.AppendText(f.PrintName())
-	    self.tc.AppendText(f.SearchPhrase(self.tc2.GetValue().lower()))
+	    self.tc.AppendText("\n----------------------------------------------------------")
+	    self.tc.AppendText("\n"+f.PrintName())
+	    self.tc.AppendText("\n\n"+f.SearchPhrase(self.tc2.GetValue().lower()))
 
     def InitUI(self): 
         panel = wx.Panel(self)
