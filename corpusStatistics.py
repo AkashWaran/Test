@@ -10,28 +10,31 @@ stopwords = []
 class NLPFile(threading.Thread) :
     def __init__(self, path) :
 	super(NLPFile, self).__init__()
-	self.lock = threading.Lock()
 	self.name = path
 	self.word_dict = {}
 	self.ProcessFile()
 
     def ProcessFile(self) :
-	t = threading.Thread(target = self.ProcessFileInThread)
-	t.start()
+	self.t = threading.Thread(target = self.ProcessFileInThread)
+	self.t.start()
 
     def ProcessFileInThread(self) :
-	self.lock.acquire()
+	global lock
+	lock.acquire()
 	global bigramMeasure
 	global tagger
-	self.data = open(self.name, 'r').read()
+	f = open(self.name, 'r')
+	self.data = f.read()
+	f.close()
 	self.tokens = [item for item in nltk.word_tokenize(self.data) if item not in stopwords]
 	self.bigrams = BigramCollocationFinder.from_words(self.tokens).score_ngrams(bigramMeasure.raw_freq)
 	self.word_dict.update(tagger.tag(self.tokens))
-	self.lock.release()
+	lock.release()
 
     def ProcessingComplete(self) :
-	self.lock.acquire()
-	self.lock.release()
+	global lock
+	lock.acquire()
+	lock.release()
 	return True
 
     def PrintName(self) :
@@ -75,6 +78,8 @@ class NLP(wx.Frame):
 	f = open('Smart.English.stop') 
 	stopwords = filter(None, f.read().split('\n'))
 	f.close();
+	global lock
+	lock = threading.Lock()
 	global bigramMeasure
 	global tagger
 	bigramMeasure = nltk.collocations.BigramAssocMeasures()
