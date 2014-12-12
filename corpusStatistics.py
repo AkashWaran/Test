@@ -9,13 +9,14 @@ stopwords = []
 
 class NLPFile(threading.Thread) :
     def __init__(self, path) :
+	super(NLPFile, self).__init__()
+	self.lock = threading.Lock()
 	self.name = path
 	self.word_dict = {}
 	self.ProcessFile()
-	self.lock = threading.Lock()
 
     def ProcessFile(self) :
-	t = threading.Thread(target = ProcessFileInThread)
+	t = threading.Thread(target = self.ProcessFileInThread)
 	t.start()
 
     def ProcessFileInThread(self) :
