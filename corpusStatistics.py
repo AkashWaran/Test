@@ -13,6 +13,8 @@ class NLPFile :
 	self.ProcessFile()
 
     def ProcessFile(self) :
+	global bigramMeasure
+	global tagger
 	self.data = open(self.name, 'r').read()
 	self.tokens = [item for item in nltk.word_tokenize(self.data) if item not in stopwords]
 	self.bigrams = BigramCollocationFinder.from_words(self.tokens).score_ngrams(bigramMeasure.raw_freq)
@@ -54,8 +56,10 @@ class NLP(wx.Frame):
 	f = open('Smart.English.stop') 
 	stopwords = filter(None, f.read().split('\n'))
 	f.close();
-	global bigramMeasure = nltk.collocations.BigramAssocMeasures()
-	global tagger = NERTagger('./stanford-ner-2014-10-26/classifiers/english.all.3class.distsim.crf.ser.gz', './stanford-ner-2014-10-26/stanford-ner.jar')
+	global bigramMeasure
+	global tagger
+	bigramMeasure = nltk.collocations.BigramAssocMeasures()
+	tagger = NERTagger('./stanford-ner-2014-10-26/classifiers/english.all.3class.distsim.crf.ser.gz', './stanford-ner-2014-10-26/stanford-ner.jar')
 	self.search_criteria = []
 	self.NLPFileList = []
 
@@ -73,16 +77,16 @@ class NLP(wx.Frame):
 	print "select directory"
 
     def ViewWords(self, event) :
-	self.tc.setValue("PRINTING TOKENS")
+	self.tc.SetValue("PRINTING TOKENS")
 	for f in self.NLPFileList :
-	    self.tc.setValue("----------------------------------------------------------")
+	    self.tc.AppendText("----------------------------------------------------------")
 	    self.tc.AppendText(f.PrintName())
 	    self.tc.AppendText(f.PrintTokens())
 
     def ViewBigrams(self, event) :
-	self.tc.setValue("PRINTING BIGRAMS")
+	self.tc.SetValue("PRINTING BIGRAMS")
 	for f in self.NLPFileList :
-	    self.tc.setValue("----------------------------------------------------------")
+	    self.tc.AppendText("----------------------------------------------------------")
 	    self.tc.AppendText(f.PrintName())
 	    self.tc.AppendText(f.PrintBigrams())
 
@@ -96,16 +100,16 @@ class NLP(wx.Frame):
 	    self.search_criteria.remove(sender.GetName())
 
     def ViewNames(self, event) :
-	self.tc.setValue("PRINTING MATCHES")
+	self.tc.SetValue("PRINTING MATCHES")
 	for f in self.NLPFileList :
-	    self.tc.setValue("----------------------------------------------------------")
+	    self.tc.AppendText("----------------------------------------------------------")
 	    self.tc.AppendText(f.PrintName())
 	    self.tc.AppendText(f.PrintMatches(self.search_criteria))
 
     def SearchPhrase(self, event) :
-	self.tc.setValue("PRINTING SEARCH RESULTS")
+	self.tc.SetValue("PRINTING SEARCH RESULTS")
 	for f in self.NLPFileList :
-	    self.tc.setValue("----------------------------------------------------------")
+	    self.tc.AppendText("----------------------------------------------------------")
 	    self.tc.AppendText(f.PrintName())
 	    self.tc.AppendText(f.SearchPhrase(self.tc2.GetValue().lower()))
 
