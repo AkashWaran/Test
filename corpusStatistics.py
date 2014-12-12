@@ -1,47 +1,65 @@
 import wx
 import os
 import nltk
+import threading
 from nltk.collocations import * 
 from nltk.tag.stanford import NERTagger
 
 stopwords = []
 
-class NLPFile :
+class NLPFile(threading.Thread) :
     def __init__(self, path) :
 	self.name = path
 	self.word_dict = {}
 	self.ProcessFile()
+	self.lock = threading.Lock()
 
     def ProcessFile(self) :
+	t = threading.Thread(target = ProcessFileInThread)
+	t.start()
+
+    def ProcessFileInThread(self) :
+	self.lock.acquire()
 	global bigramMeasure
 	global tagger
 	self.data = open(self.name, 'r').read()
 	self.tokens = [item for item in nltk.word_tokenize(self.data) if item not in stopwords]
 	self.bigrams = BigramCollocationFinder.from_words(self.tokens).score_ngrams(bigramMeasure.raw_freq)
 	self.word_dict.update(tagger.tag(self.tokens))
+	self.lock.release()
+
+    def ProcessingComplete(self) :
+	self.lock.acquire()
+	self.lock.release()
+	return True
 
     def PrintName(self) :
-	return self.name
+	if self.ProcessingComplete() :
+	    return self.name
 
     def PrintTokens(self) :
-	return ', '.join(self.tokens)
+	if self.ProcessingComplete() :
+	    return ', '.join(self.tokens)
 
     def PrintBigrams(self) :
-	return ', '.join("(%s,%s)" % tup for tup in self.bigrams)
+	if self.ProcessingComplete() :
+	    return ', '.join("(%s,%s)" % tup for tup in self.bigrams)
 
     def PrintMatches(self, criteria) :
-	result = ""
-	for word, val in self.word_dict.items():
-	    if val in criteria:
-		result = result + word + " "
-	return result
+	if self.ProcessingComplete() :
+	    result = ""
+	    for word, val in self.word_dict.items():
+		if val in criteria:
+		    result = result + word + " "
+	    return result
 
     def SearchPhrase(self, value) :
-	if value in self.data.lower() :
-	    message = "Phrase / word present in document"
-	else :
-	    message = "Phrase / word not present in document"
-	return message
+	if self.ProcessingComplete() :
+	    if value in self.data.lower() :
+		message = "Phrase / word present in document"
+	    else :
+		message = "Phrase / word not present in document"
+	    return message
 
 class NLP(wx.Frame):
 
